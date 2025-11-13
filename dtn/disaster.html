@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disaster DTN Communication Simulator</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100%;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0 0 12px 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 18px;
+            opacity: 0.95;
+            margin-bottom: 20px;
+        }
+
+        .explanation {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: left;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .explanation h3 {
+            margin: 0 0 12px 0;
+            font-size: 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            background: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(107, 114, 128, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            min-width: 80px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .simulation-area {
+            position: relative;
+            height: 600px;
+            background: linear-gradient(45deg, #f3f4f6 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f3f4f6 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f3f4f6 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f3f4f6 75%);
+            background-size: 30px 30px;
+            background-position: 0 0, 0 15px, 15px -15px, -15px 0px;
+            background-color: #e5e7eb;
+            overflow: hidden;
+            border-top: 3px solid #dc2626;
+        }
+
+        .disaster-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(239, 68, 68, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 60% 20%, rgba(107, 114, 128, 0.1) 0%, transparent 30%);
+            pointer-events: none;
+        }
+
+        .rescue-worker {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border: 4px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .rescue-worker::before {
+            content: '👨‍🚒';
+        }
+
+        .rescue-worker.connected {
+            animation: connectionPulse 1.5s infinite;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+        }
+
+        .rescue-worker.has-messages {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .rescue-worker.delivering {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            animation: deliveryPulse 0.8s infinite;
+        }
+
+        @keyframes connectionPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+            }
+            50% { 
+                transform: scale(1.1);
+                box-shadow: 0 0 30px rgba(16, 185, 129, 0.8);
+            }
+        }
+
+        @keyframes deliveryPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .connection-line {
+            position: absolute;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+            z-index: 5;
+            border-radius: 2px;
+            animation: dataFlow 2s infinite;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        @keyframes dataFlow {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        .message-indicator {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            min-width: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+        }
+
+        .delivery-notification {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            transform: translateX(120%);
+            transition: transform 0.4s ease;
+            z-index: 20;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .delivery-notification.show {
+            transform: translateX(0);
+        }
+
+        .message-creation {
+            position: absolute;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            animation: messageCreate 2s ease-out forwards;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        @keyframes messageCreate {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-30px) scale(0.8);
+            }
+        }
+
+        .legend {
+            padding: 25px 30px;
+            background: #f8fafc;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .legend h3 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: #64748b;
+            padding: 8px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .legend-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .status-bar {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            color: white;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .stats {
+                justify-content: space-around;
+                flex-wrap: wrap;
+            }
+
+            .simulation-area {
+                height: 500px;
+            }
+
+            .legend-items {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="container">
+   <div class="header">
+    <h1 id="simulation-title">Disaster DTN Communication Simulator</h1>
+    <p class="subtitle" id="scenario-description">Emergency response in disaster zone</p>
+    <div class="explanation">
+     <h3>🚨 How DTN Works in Disasters</h3>
+     <p><strong>Delay Tolerant Networks (DTN)</strong> enable communication when traditional internet infrastructure is damaged or unavailable. Rescue workers' devices store messages and exchange them when they come into contact with each other, creating a "store-carry-forward" network that doesn't require constant connectivity.</p>
+    </div>
+   </div>
+   <div class="controls">
+    <div class="control-group"><button id="startBtn" class="btn btn-primary">🚀 Start Mission</button> <button id="pauseBtn" class="btn btn-secondary">⏸️ Pause</button> <button id="resetBtn" class="btn btn-danger">🔄 Reset</button>
+    </div>
+    <div class="stats">
+     <div class="stat-item">
+      <div class="stat-value" id="workerCount">
+       6
+      </div>
+      <div class="stat-label" id="worker-count-label">
+       Rescue Workers
+      </div>
+     </div>
+     <div class="stat-item">
+      <div class="stat-value" id="totalMessages">
+       0
+      </div>
+      <div class="stat-label">
+       Messages Created
+      </div>
+     </div>
+     <div class="stat-item">
+      <div class="stat-value" id="deliveredMessages">
+       0
+      </div>
+      <div class="stat-label">
+       Delivered
+      </div>
+     </div>
+     <div class="stat-item">
+      <div class="stat-value" id="avgDelay">
+       0s
+      </div>
+      <div class="stat-label">
+       Avg Delay
+      </div>
+     </div>
+     <div class="stat-item">
+      <div class="stat-value" id="missionTime">
+       0s
+      </div>
+      <div class="stat-label">
+       Mission Time
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="simulation-area" id="simulationArea">
+    <div class="disaster-overlay"></div>
+    <div id="deliveryNotification" class="delivery-notification">
+     📡 Message Delivered Successfully! 🎉
+    </div>
+   </div>
+   <div class="status-bar" id="statusBar">
+    🔴 Simulation Stopped - Click "Start Mission" to begin emergency communication simulation
+   </div>
+   <div class="legend">
+    <h3>📋 Mission Control Legend</h3>
+    <div class="legend-items">
+     <div class="legend-item">
+      <div class="legend-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white;">
+       👨‍🚒
+      </div><span>Rescue Worker (Normal)</span>
+     </div>
+     <div class="legend-item">
+      <div class="legend-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;">
+       👨‍🚒
+      </div><span>Carrying Messages</span>
+     </div>
+     <div class="legend-item">
+      <div class="legend-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+       👨‍🚒
+      </div><span>Delivering Messages</span>
+     </div>
+     <div class="legend-item">
+      <div style="width: 24px; height: 4px; background: linear-gradient(90deg, #10b981, #34d399); border-radius: 2px;"></div><span>Data Exchange (100px range)</span>
+     </div>
+     <div class="legend-item">
+      <div class="legend-icon" style="background: #dc2626; color: white; font-size: 10px;">
+       5
+      </div><span>Message Count Indicator</span>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+        class DisasterDTNSimulator {
+            constructor() {
+                this.workers = [];
+                this.connections = [];
+                this.messages = [];
+                this.isRunning = false;
+                this.startTime = 0;
+                this.totalMessagesCreated = 0;
+                this.deliveredCount = 0;
+                this.totalDelay = 0;
+                this.animationId = null;
+                this.messageIdCounter = 0;
+                
+                this.config = {
+                    simulation_title: "Disaster DTN Communication Simulator",
+                    scenario_description: "Emergency response in disaster zone",
+                    worker_count_label: "Rescue Workers"
+                };
+
+                this.init();
+            }
+
+            init() {
+                this.createWorkers();
+                this.setupEventListeners();
+                this.updateStats();
+                this.updateStatusBar("🔴 Simulation Stopped - Click \"Start Mission\" to begin emergency communication simulation");
+            }
+
+            createWorkers() {
+                const simulationArea = document.getElementById('simulationArea');
+                const workerTypes = ['👨‍🚒', '👩‍🚒', '🚑', '👮‍♂️', '👩‍⚕️', '🚁'];
+
+                for (let i = 0; i < 6; i++) {
+                    const worker = {
+                        id: i,
+                        x: Math.random() * (simulationArea.offsetWidth - 60) + 30,
+                        y: Math.random() * (simulationArea.offsetHeight - 60) + 30,
+                        vx: (Math.random() - 0.5) * 3,
+                        vy: (Math.random() - 0.5) * 3,
+                        messages: [],
+                        element: this.createWorkerElement(i, workerTypes[i]),
+                        lastMessageTime: 0,
+                        type: workerTypes[i]
+                    };
+
+                    this.workers.push(worker);
+                    simulationArea.appendChild(worker.element);
+                    this.updateWorkerPosition(worker);
+                }
+            }
+
+            createWorkerElement(id, type) {
+                const element = document.createElement('div');
+                element.className = 'rescue-worker';
+                element.id = `worker-${id}`;
+                element.style.setProperty('--worker-type', `"${type}"`);
+                
+                // Override the emoji with the specific type
+                element.innerHTML = `<style>
+                    #worker-${id}::before { content: "${type}"; }
+                </style>`;
+                
+                return element;
+            }
+
+            setupEventListeners() {
+                document.getElementById('startBtn').addEventListener('click', () => this.start());
+                document.getElementById('pauseBtn').addEventListener('click', () => this.pause());
+                document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+            }
+
+            start() {
+                if (!this.isRunning) {
+                    this.isRunning = true;
+                    this.startTime = Date.now();
+                    this.updateStatusBar("🟢 Mission Active - Rescue workers exchanging emergency communications");
+                    this.animate();
+                }
+            }
+
+            pause() {
+                this.isRunning = false;
+                this.updateStatusBar("🟡 Mission Paused - Communication network on standby");
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+            }
+
+            reset() {
+                this.pause();
+                this.clearSimulation();
+                this.totalMessagesCreated = 0;
+                this.deliveredCount = 0;
+                this.totalDelay = 0;
+                this.messageIdCounter = 0;
+                this.messages = [];
+                this.updateStatusBar("🔴 Mission Reset - Ready to begin new emergency simulation");
+                this.init();
+            }
+
+            clearSimulation() {
+                const simulationArea = document.getElementById('simulationArea');
+                const workers = simulationArea.querySelectorAll('.rescue-worker');
+                const connections = simulationArea.querySelectorAll('.connection-line');
+                const notifications = simulationArea.querySelectorAll('.message-creation');
+                
+                workers.forEach(w => w.remove());
+                connections.forEach(c => c.remove());
+                notifications.forEach(n => n.remove());
+                
+                this.workers = [];
+                this.connections = [];
+            }
+
+            animate() {
+                if (!this.isRunning) return;
+
+                this.updateWorkers();
+                this.checkConnections();
+                this.transferMessages();
+                this.generateRandomMessages();
+                this.updateStats();
+                this.renderConnections();
+
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+
+            updateWorkers() {
+                const simulationArea = document.getElementById('simulationArea');
+                const width = simulationArea.offsetWidth;
+                const height = simulationArea.offsetHeight;
+
+                this.workers.forEach(worker => {
+                    // Update position
+                    worker.x += worker.vx;
+                    worker.y += worker.vy;
+
+                    // Boundary checking with bounce
+                    if (worker.x <= 25 || worker.x >= width - 75) {
+                        worker.vx *= -1;
+                        worker.x = Math.max(25, Math.min(width - 75, worker.x));
+                    }
+
+                    if (worker.y <= 25 || worker.y >= height - 75) {
+                        worker.vy *= -1;
+                        worker.y = Math.max(25, Math.min(height - 75, worker.y));
+                    }
+
+                    // Random direction changes (emergency movement patterns)
+                    if (Math.random() < 0.03) {
+                        worker.vx += (Math.random() - 0.5) * 1;
+                        worker.vy += (Math.random() - 0.5) * 1;
+                        
+                        // Limit speed
+                        const maxSpeed = 4;
+                        const speed = Math.sqrt(worker.vx * worker.vx + worker.vy * worker.vy);
+                        if (speed > maxSpeed) {
+                            worker.vx = (worker.vx / speed) * maxSpeed;
+                            worker.vy = (worker.vy / speed) * maxSpeed;
+                        }
+                    }
+
+                    this.updateWorkerPosition(worker);
+                });
+            }
+
+            updateWorkerPosition(worker) {
+                worker.element.style.left = `${worker.x}px`;
+                worker.element.style.top = `${worker.y}px`;
+            }
+
+            checkConnections() {
+                this.connections = [];
+                
+                // Reset connection states
+                this.workers.forEach(worker => {
+                    worker.element.classList.remove('connected');
+                });
+                
+                for (let i = 0; i < this.workers.length; i++) {
+                    for (let j = i + 1; j < this.workers.length; j++) {
+                        const w1 = this.workers[i];
+                        const w2 = this.workers[j];
+                        const distance = this.getDistance(w1, w2);
+                        
+                        if (distance <= 100) {
+                            this.connections.push({ w1, w2, distance });
+                            w1.element.classList.add('connected');
+                            w2.element.classList.add('connected');
+                        }
+                    }
+                }
+            }
+
+            getDistance(w1, w2) {
+                const dx = (w1.x + 25) - (w2.x + 25); // Center to center
+                const dy = (w1.y + 25) - (w2.y + 25);
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            transferMessages() {
+                this.connections.forEach(connection => {
+                    const { w1, w2 } = connection;
+                    
+                    // Mark as delivering
+                    w1.element.classList.add('delivering');
+                    w2.element.classList.add('delivering');
+                    
+                    setTimeout(() => {
+                        w1.element.classList.remove('delivering');
+                        w2.element.classList.remove('delivering');
+                    }, 800);
+                    
+                    // Transfer messages from w1 to w2
+                    w1.messages.forEach(message => {
+                        if (!message.delivered && !w2.messages.find(m => m.id === message.id)) {
+                            const messageCopy = { 
+                                ...message, 
+                                hops: message.hops + 1, 
+                                currentCarrier: w2.id,
+                                lastTransferTime: Date.now()
+                            };
+                            w2.messages.push(messageCopy);
+                            
+                            // Update original message in global array
+                            const originalIndex = this.messages.findIndex(m => m.id === message.id);
+                            if (originalIndex !== -1) {
+                                this.messages[originalIndex] = messageCopy;
+                            }
+                            
+                            // Check if delivered to destination
+                            if (w2.id === message.destination) {
+                                messageCopy.delivered = true;
+                                messageCopy.deliveredAt = Date.now();
+                                this.deliveredCount++;
+                                this.totalDelay += messageCopy.deliveredAt - messageCopy.createdAt;
+                                this.showDeliveryNotification();
+                            }
+                        }
+                    });
+                    
+                    // Transfer messages from w2 to w1
+                    w2.messages.forEach(message => {
+                        if (!message.delivered && !w1.messages.find(m => m.id === message.id)) {
+                            const messageCopy = { 
+                                ...message, 
+                                hops: message.hops + 1, 
+                                currentCarrier: w1.id,
+                                lastTransferTime: Date.now()
+                            };
+                            w1.messages.push(messageCopy);
+                            
+                            // Update original message in global array
+                            const originalIndex = this.messages.findIndex(m => m.id === message.id);
+                            if (originalIndex !== -1) {
+                                this.messages[originalIndex] = messageCopy;
+                            }
+                            
+                            // Check if delivered to destination
+                            if (w1.id === message.destination) {
+                                messageCopy.delivered = true;
+                                messageCopy.deliveredAt = Date.now();
+                                this.deliveredCount++;
+                                this.totalDelay += messageCopy.deliveredAt - messageCopy.createdAt;
+                                this.showDeliveryNotification();
+                            }
+                        }
+                    });
+                    
+                    this.updateWorkerAppearance(w1);
+                    this.updateWorkerAppearance(w2);
+                });
+            }
+
+            generateRandomMessages() {
+                // Generate messages randomly
+                if (Math.random() < 0.02) { // 2% chance per frame
+                    const source = Math.floor(Math.random() * this.workers.length);
+                    let destination = Math.floor(Math.random() * this.workers.length);
+                    while (destination === source) {
+                        destination = Math.floor(Math.random() * this.workers.length);
+                    }
+                    
+                    this.createMessage(source, destination);
+                }
+            }
+
+            createMessage(source, destination) {
+                const message = {
+                    id: `msg-${this.messageIdCounter++}`,
+                    source,
+                    destination,
+                    hops: 0,
+                    currentCarrier: source,
+                    delivered: false,
+                    createdAt: Date.now(),
+                    content: this.generateMessageContent()
+                };
+                
+                this.messages.push(message);
+                this.workers[source].messages.push(message);
+                this.totalMessagesCreated++;
+                
+                this.updateWorkerAppearance(this.workers[source]);
+                this.showMessageCreation(this.workers[source], message.content);
+            }
+
+            generateMessageContent() {
+                const emergencyMessages = [
+                    "Medical assistance needed",
+                    "Evacuation route clear",
+                    "Supply drop coordinates",
+                    "Survivor location update",
+                    "Equipment request urgent",
+                    "Status report required",
+                    "Hazard zone identified",
+                    "Rescue team deployment"
+                ];
+                
+                return emergencyMessages[Math.floor(Math.random() * emergencyMessages.length)];
+            }
+
+            showMessageCreation(worker, content) {
+                const notification = document.createElement('div');
+                notification.className = 'message-creation';
+                notification.textContent = `📨 ${content}`;
+                notification.style.left = `${worker.x + 60}px`;
+                notification.style.top = `${worker.y + 10}px`;
+                
+                document.getElementById('simulationArea').appendChild(notification);
+                
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 2000);
+            }
+
+            updateWorkerAppearance(worker) {
+                const hasUndeliveredMessages = worker.messages.some(m => !m.delivered);
+                
+                if (hasUndeliveredMessages) {
+                    worker.element.classList.add('has-messages');
+                } else {
+                    worker.element.classList.remove('has-messages');
+                }
+                
+                // Update message indicator
+                const existingIndicator = worker.element.querySelector('.message-indicator');
+                if (existingIndicator) {
+                    existingIndicator.remove();
+                }
+                
+                const undeliveredCount = worker.messages.filter(m => !m.delivered).length;
+                if (undeliveredCount > 0) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'message-indicator';
+                    indicator.textContent = undeliveredCount;
+                    worker.element.appendChild(indicator);
+                }
+            }
+
+            renderConnections() {
+                // Remove existing connection lines
+                const existingLines = document.querySelectorAll('.connection-line');
+                existingLines.forEach(line => line.remove());
+                
+                // Draw new connection lines
+                this.connections.forEach(connection => {
+                    const { w1, w2 } = connection;
+                    const line = document.createElement('div');
+                    line.className = 'connection-line';
+                    
+                    const x1 = w1.x + 25;
+                    const y1 = w1.y + 25;
+                    const x2 = w2.x + 25;
+                    const y2 = w2.y + 25;
+                    
+                    const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+                    const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                    
+                    line.style.width = `${length}px`;
+                    line.style.left = `${x1}px`;
+                    line.style.top = `${y1}px`;
+                    line.style.transform = `rotate(${angle}deg)`;
+                    line.style.transformOrigin = '0 50%';
+                    
+                    document.getElementById('simulationArea').appendChild(line);
+                });
+            }
+
+            showDeliveryNotification() {
+                const notification = document.getElementById('deliveryNotification');
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+
+            updateStatusBar(message) {
+                document.getElementById('statusBar').textContent = message;
+            }
+
+            updateStats() {
+                const currentTime = this.isRunning ? Math.floor((Date.now() - this.startTime) / 1000) : 0;
+                const avgDelay = this.deliveredCount > 0 ? Math.round(this.totalDelay / this.deliveredCount / 1000) : 0;
+                
+                document.getElementById('workerCount').textContent = this.workers.length;
+                document.getElementById('totalMessages').textContent = this.totalMessagesCreated;
+                document.getElementById('deliveredMessages').textContent = this.deliveredCount;
+                document.getElementById('avgDelay').textContent = `${avgDelay}s`;
+                document.getElementById('missionTime').textContent = `${currentTime}s`;
+            }
+
+            updateConfig(newConfig) {
+                Object.assign(this.config, newConfig);
+                
+                // Update UI elements
+                if (newConfig.simulation_title) {
+                    document.getElementById('simulation-title').textContent = newConfig.simulation_title;
+                }
+                if (newConfig.scenario_description) {
+                    document.getElementById('scenario-description').textContent = newConfig.scenario_description;
+                }
+                if (newConfig.worker_count_label) {
+                    document.getElementById('worker-count-label').textContent = newConfig.worker_count_label;
+                }
+            }
+        }
+
+        // Initialize simulation
+        let simulator;
+
+        // Element SDK configuration
+        const defaultConfig = {
+            simulation_title: "Disaster DTN Communication Simulator",
+            scenario_description: "Emergency response in disaster zone",
+            worker_count_label: "Rescue Workers"
+        };
+
+        async function onConfigChange(config) {
+            if (simulator) {
+                simulator.updateConfig(config);
+            }
+        }
+
+        function mapToCapabilities(config) {
+            return {
+                recolorables: [],
+                borderables: [],
+                fontEditable: undefined,
+                fontSizeable: undefined
+            };
+        }
+
+        function mapToEditPanelValues(config) {
+            return new Map([
+                ["simulation_title", config.simulation_title || defaultConfig.simulation_title],
+                ["scenario_description", config.scenario_description || defaultConfig.scenario_description],
+                ["worker_count_label", config.worker_count_label || defaultConfig.worker_count_label]
+            ]);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            simulator = new DisasterDTNSimulator();
+            
+            // Initialize Element SDK
+            if (window.elementSdk) {
+                window.elementSdk.init({
+                    defaultConfig,
+                    onConfigChange,
+                    mapToCapabilities,
+                    mapToEditPanelValues
+                });
+            }
+        });
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99deb14c16c2c1bd',t:'MTc2MzA0MTM0OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
