@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DTN Disaster Communication Simulation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Delay Tolerant Network (DTN) Disaster Communication Simulation</h1>
+            <div class="explanation">
+                <p>In disaster zones where normal internet is unavailable, DTN enables communication by using mobile devices as nodes. 
+                When rescue workers move close to each other, their devices automatically exchange stored messages, creating an ad-hoc network.</p>
+            </div>
+        </header>
+
+        <div class="simulation-area">
+            <div class="controls">
+                <button id="startBtn">Start Simulation</button>
+                <button id="pauseBtn" disabled>Pause</button>
+                <button id="resetBtn">Reset</button>
+                <button id="addMessageBtn">Add Message</button>
+                <div class="speed-control">
+                    <label for="speedSlider">Simulation Speed:</label>
+                    <input type="range" id="speedSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Total Messages:</span>
+                    <span id="totalMessages">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Delivered Messages:</span>
+                    <span id="deliveredMessages">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Delivery Rate:</span>
+                    <span id="deliveryRate">0%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Average Delay:</span>
+                    <span id="avgDelay">0s</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Active Contacts:</span>
+                    <span id="activeContacts">0</span>
+                </div>
+            </div>
+
+            <div class="visualization">
+                <canvas id="simulationCanvas" width="800" height="500"></canvas>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="node-sample node-rescuer"></div>
+                        <span>Rescue Worker</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="node-sample node-message"></div>
+                        <span>Has Messages</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="connection-sample"></div>
+                        <span>Message Exchange</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="message-log">
+                <h3>Message Events</h3>
+                <div id="eventLog" class="event-log"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

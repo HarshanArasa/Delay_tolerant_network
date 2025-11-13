@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicular DTN Simulator</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100%;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .stats {
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .simulation-area {
+            position: relative;
+            height: 500px;
+            background: linear-gradient(to bottom, #87ceeb 0%, #98fb98 100%);
+            overflow: hidden;
+        }
+
+        .road {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 120px;
+            background: #374151;
+            transform: translateY(-50%);
+            border-top: 3px solid #fbbf24;
+            border-bottom: 3px solid #fbbf24;
+        }
+
+        .road::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: repeating-linear-gradient(
+                to right,
+                #fbbf24 0px,
+                #fbbf24 30px,
+                transparent 30px,
+                transparent 60px
+            );
+            transform: translateY(-50%);
+        }
+
+        .road-label {
+            position: absolute;
+            top: -30px;
+            left: 20px;
+            color: #374151;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .vehicle {
+            position: absolute;
+            width: 40px;
+            height: 20px;
+            background: #3b82f6;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .vehicle::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            transition: border-color 0.3s;
+        }
+
+        .vehicle.connected::before {
+            border-color: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .vehicle.has-message {
+            background: #f59e0b;
+        }
+
+        .vehicle.source {
+            background: #ef4444;
+        }
+
+        .vehicle.destination {
+            background: #10b981;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .connection-line {
+            position: absolute;
+            height: 2px;
+            background: #10b981;
+            z-index: 5;
+            animation: connectionPulse 1s infinite;
+        }
+
+        @keyframes connectionPulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 0.4; }
+        }
+
+        .message-indicator {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f59e0b;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .delivery-notification {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 20;
+        }
+
+        .delivery-notification.show {
+            transform: translateX(0);
+        }
+
+        .legend {
+            padding: 20px 24px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .legend h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: #1e293b;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .stats {
+                justify-content: space-around;
+            }
+
+            .simulation-area {
+                height: 400px;
+            }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="container">
+   <div class="header">
+    <h1 id="simulation-title">Vehicular DTN Network Simulator</h1>
+    <p>Demonstrating Store-Carry-Forward Message Delivery</p>
+   </div>
+   <div class="controls">
+    <div class="control-group"><button id="startBtn" class="btn btn-primary">Start Simulation</button> <button id="pauseBtn" class="btn btn-secondary">Pause</button> <button id="resetBtn" class="btn btn-danger">Reset</button>
+    </div>
+    <div class="stats">
+     <div class="stat-item">
+      <div class="stat-value" id="nodeCount">
+       5
+      </div>
+      <div>
+       Vehicles
+      </div>
+     </div>
+     <div class="stat-item">
+      <div class="stat-value" id="deliveryCount">
+       0
+      </div>
+      <div>
+       Delivered
+      </div>
+     </div>
+     <div class="stat-item">
+      <div class="stat-value" id="simTime">
+       0s
+      </div>
+      <div>
+       Time
+      </div>
+     </div>
+     <div class="stat-item">
+      <div class="stat-value" id="avgHops">
+       0
+      </div>
+      <div>
+       Avg Hops
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="simulation-area" id="simulationArea">
+    <div class="road">
+     <div class="road-label" id="road-label">
+      Highway 101
+     </div>
+    </div>
+    <div id="deliveryNotification" class="delivery-notification">
+     Message Delivered! 🎉
+    </div>
+   </div>
+   <div class="legend">
+    <h3>Legend</h3>
+    <div class="legend-items">
+     <div class="legend-item">
+      <div class="legend-color" style="background: #3b82f6;"></div><span>Normal Vehicle</span>
+     </div>
+     <div class="legend-item">
+      <div class="legend-color" style="background: #ef4444;"></div><span>Message Source</span>
+     </div>
+     <div class="legend-item">
+      <div class="legend-color" style="background: #10b981;"></div><span>Message Destination</span>
+     </div>
+     <div class="legend-item">
+      <div class="legend-color" style="background: #f59e0b;"></div><span>Carrying Message</span>
+     </div>
+     <div class="legend-item">
+      <div style="width: 16px; height: 2px; background: #10b981;"></div><span>Connection (100px range)</span>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+        class DTNSimulator {
+            constructor() {
+                this.vehicles = [];
+                this.connections = [];
+                this.messages = [];
+                this.isRunning = false;
+                this.startTime = 0;
+                this.deliveredCount = 0;
+                this.totalHops = 0;
+                this.animationId = null;
+                
+                this.config = {
+                    simulation_title: "Vehicular DTN Network Simulator",
+                    road_label: "Highway 101"
+                };
+
+                this.init();
+            }
+
+            init() {
+                this.createVehicles();
+                this.setupEventListeners();
+                this.createInitialMessage();
+                this.updateStats();
+            }
+
+            createVehicles() {
+                const simulationArea = document.getElementById('simulationArea');
+                const roadTop = 250 - 60; // Road center minus half road height
+                const roadBottom = 250 + 60;
+
+                for (let i = 0; i < 5; i++) {
+                    const vehicle = {
+                        id: i,
+                        x: Math.random() * (simulationArea.offsetWidth - 40),
+                        y: roadTop + Math.random() * 120,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        messages: [],
+                        element: this.createVehicleElement(i),
+                        isSource: i === 0,
+                        isDestination: i === 4
+                    };
+
+                    this.vehicles.push(vehicle);
+                    simulationArea.appendChild(vehicle.element);
+                    this.updateVehiclePosition(vehicle);
+                }
+            }
+
+            createVehicleElement(id) {
+                const element = document.createElement('div');
+                element.className = 'vehicle';
+                element.id = `vehicle-${id}`;
+                
+                if (id === 0) element.classList.add('source');
+                if (id === 4) element.classList.add('destination');
+                
+                return element;
+            }
+
+            createInitialMessage() {
+                const message = {
+                    id: 'msg-1',
+                    source: 0,
+                    destination: 4,
+                    hops: 0,
+                    currentCarrier: 0,
+                    delivered: false,
+                    createdAt: Date.now()
+                };
+
+                this.messages.push(message);
+                this.vehicles[0].messages.push(message);
+                this.updateVehicleAppearance(this.vehicles[0]);
+            }
+
+            setupEventListeners() {
+                document.getElementById('startBtn').addEventListener('click', () => this.start());
+                document.getElementById('pauseBtn').addEventListener('click', () => this.pause());
+                document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+            }
+
+            start() {
+                if (!this.isRunning) {
+                    this.isRunning = true;
+                    this.startTime = Date.now();
+                    this.animate();
+                }
+            }
+
+            pause() {
+                this.isRunning = false;
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+            }
+
+            reset() {
+                this.pause();
+                this.clearSimulation();
+                this.deliveredCount = 0;
+                this.totalHops = 0;
+                this.messages = [];
+                this.init();
+            }
+
+            clearSimulation() {
+                const simulationArea = document.getElementById('simulationArea');
+                const vehicles = simulationArea.querySelectorAll('.vehicle');
+                const connections = simulationArea.querySelectorAll('.connection-line');
+                
+                vehicles.forEach(v => v.remove());
+                connections.forEach(c => c.remove());
+                
+                this.vehicles = [];
+                this.connections = [];
+            }
+
+            animate() {
+                if (!this.isRunning) return;
+
+                this.updateVehicles();
+                this.checkConnections();
+                this.transferMessages();
+                this.updateStats();
+                this.renderConnections();
+
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+
+            updateVehicles() {
+                const simulationArea = document.getElementById('simulationArea');
+                const width = simulationArea.offsetWidth;
+                const roadTop = 190;
+                const roadBottom = 310;
+
+                this.vehicles.forEach(vehicle => {
+                    // Update position
+                    vehicle.x += vehicle.vx;
+                    vehicle.y += vehicle.vy;
+
+                    // Boundary checking
+                    if (vehicle.x <= 0 || vehicle.x >= width - 40) {
+                        vehicle.vx *= -1;
+                        vehicle.x = Math.max(0, Math.min(width - 40, vehicle.x));
+                    }
+
+                    if (vehicle.y <= roadTop || vehicle.y >= roadBottom) {
+                        vehicle.vy *= -1;
+                        vehicle.y = Math.max(roadTop, Math.min(roadBottom, vehicle.y));
+                    }
+
+                    // Random direction changes
+                    if (Math.random() < 0.02) {
+                        vehicle.vx += (Math.random() - 0.5) * 0.5;
+                        vehicle.vy += (Math.random() - 0.5) * 0.2;
+                        
+                        // Limit speed
+                        const maxSpeed = 3;
+                        const speed = Math.sqrt(vehicle.vx * vehicle.vx + vehicle.vy * vehicle.vy);
+                        if (speed > maxSpeed) {
+                            vehicle.vx = (vehicle.vx / speed) * maxSpeed;
+                            vehicle.vy = (vehicle.vy / speed) * maxSpeed;
+                        }
+                    }
+
+                    this.updateVehiclePosition(vehicle);
+                });
+            }
+
+            updateVehiclePosition(vehicle) {
+                vehicle.element.style.left = `${vehicle.x}px`;
+                vehicle.element.style.top = `${vehicle.y}px`;
+            }
+
+            checkConnections() {
+                this.connections = [];
+                
+                for (let i = 0; i < this.vehicles.length; i++) {
+                    for (let j = i + 1; j < this.vehicles.length; j++) {
+                        const v1 = this.vehicles[i];
+                        const v2 = this.vehicles[j];
+                        const distance = this.getDistance(v1, v2);
+                        
+                        if (distance <= 100) {
+                            this.connections.push({ v1, v2, distance });
+                            v1.element.classList.add('connected');
+                            v2.element.classList.add('connected');
+                        } else {
+                            v1.element.classList.remove('connected');
+                            v2.element.classList.remove('connected');
+                        }
+                    }
+                }
+            }
+
+            getDistance(v1, v2) {
+                const dx = v1.x - v2.x;
+                const dy = v1.y - v2.y;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            transferMessages() {
+                this.connections.forEach(connection => {
+                    const { v1, v2 } = connection;
+                    
+                    // Transfer messages from v1 to v2
+                    v1.messages.forEach(message => {
+                        if (!message.delivered && !v2.messages.find(m => m.id === message.id)) {
+                            const messageCopy = { ...message, hops: message.hops + 1, currentCarrier: v2.id };
+                            v2.messages.push(messageCopy);
+                            
+                            // Update original message
+                            const originalIndex = this.messages.findIndex(m => m.id === message.id);
+                            if (originalIndex !== -1) {
+                                this.messages[originalIndex] = messageCopy;
+                            }
+                            
+                            // Check if delivered
+                            if (v2.id === message.destination) {
+                                messageCopy.delivered = true;
+                                this.deliveredCount++;
+                                this.totalHops += messageCopy.hops;
+                                this.showDeliveryNotification();
+                                
+                                // Create new message after delivery
+                                setTimeout(() => this.createRandomMessage(), 2000);
+                            }
+                        }
+                    });
+                    
+                    // Transfer messages from v2 to v1
+                    v2.messages.forEach(message => {
+                        if (!message.delivered && !v1.messages.find(m => m.id === message.id)) {
+                            const messageCopy = { ...message, hops: message.hops + 1, currentCarrier: v1.id };
+                            v1.messages.push(messageCopy);
+                            
+                            // Update original message
+                            const originalIndex = this.messages.findIndex(m => m.id === message.id);
+                            if (originalIndex !== -1) {
+                                this.messages[originalIndex] = messageCopy;
+                            }
+                            
+                            // Check if delivered
+                            if (v1.id === message.destination) {
+                                messageCopy.delivered = true;
+                                this.deliveredCount++;
+                                this.totalHops += messageCopy.hops;
+                                this.showDeliveryNotification();
+                                
+                                // Create new message after delivery
+                                setTimeout(() => this.createRandomMessage(), 2000);
+                            }
+                        }
+                    });
+                    
+                    this.updateVehicleAppearance(v1);
+                    this.updateVehicleAppearance(v2);
+                });
+            }
+
+            createRandomMessage() {
+                if (!this.isRunning) return;
+                
+                const source = Math.floor(Math.random() * this.vehicles.length);
+                let destination = Math.floor(Math.random() * this.vehicles.length);
+                while (destination === source) {
+                    destination = Math.floor(Math.random() * this.vehicles.length);
+                }
+                
+                const message = {
+                    id: `msg-${Date.now()}`,
+                    source,
+                    destination,
+                    hops: 0,
+                    currentCarrier: source,
+                    delivered: false,
+                    createdAt: Date.now()
+                };
+                
+                this.messages.push(message);
+                this.vehicles[source].messages.push(message);
+                this.updateVehicleAppearance(this.vehicles[source]);
+            }
+
+            updateVehicleAppearance(vehicle) {
+                const hasUndeliveredMessage = vehicle.messages.some(m => !m.delivered);
+                
+                if (hasUndeliveredMessage && !vehicle.isSource && !vehicle.isDestination) {
+                    vehicle.element.classList.add('has-message');
+                } else {
+                    vehicle.element.classList.remove('has-message');
+                }
+                
+                // Update message indicator
+                const existingIndicator = vehicle.element.querySelector('.message-indicator');
+                if (existingIndicator) {
+                    existingIndicator.remove();
+                }
+                
+                if (hasUndeliveredMessage) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'message-indicator';
+                    indicator.textContent = vehicle.messages.filter(m => !m.delivered).length;
+                    vehicle.element.appendChild(indicator);
+                }
+            }
+
+            renderConnections() {
+                // Remove existing connection lines
+                const existingLines = document.querySelectorAll('.connection-line');
+                existingLines.forEach(line => line.remove());
+                
+                // Draw new connection lines
+                this.connections.forEach(connection => {
+                    const { v1, v2 } = connection;
+                    const line = document.createElement('div');
+                    line.className = 'connection-line';
+                    
+                    const x1 = v1.x + 20;
+                    const y1 = v1.y + 10;
+                    const x2 = v2.x + 20;
+                    const y2 = v2.y + 10;
+                    
+                    const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+                    const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                    
+                    line.style.width = `${length}px`;
+                    line.style.left = `${x1}px`;
+                    line.style.top = `${y1}px`;
+                    line.style.transform = `rotate(${angle}deg)`;
+                    line.style.transformOrigin = '0 50%';
+                    
+                    document.getElementById('simulationArea').appendChild(line);
+                });
+            }
+
+            showDeliveryNotification() {
+                const notification = document.getElementById('deliveryNotification');
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+
+            updateStats() {
+                const currentTime = this.isRunning ? Math.floor((Date.now() - this.startTime) / 1000) : 0;
+                const avgHops = this.deliveredCount > 0 ? Math.round(this.totalHops / this.deliveredCount * 10) / 10 : 0;
+                
+                document.getElementById('nodeCount').textContent = this.vehicles.length;
+                document.getElementById('deliveryCount').textContent = this.deliveredCount;
+                document.getElementById('simTime').textContent = `${currentTime}s`;
+                document.getElementById('avgHops').textContent = avgHops;
+            }
+
+            updateConfig(newConfig) {
+                Object.assign(this.config, newConfig);
+                
+                // Update UI elements
+                if (newConfig.simulation_title) {
+                    document.getElementById('simulation-title').textContent = newConfig.simulation_title;
+                }
+                if (newConfig.road_label) {
+                    document.getElementById('road-label').textContent = newConfig.road_label;
+                }
+            }
+        }
+
+        // Initialize simulation
+        let simulator;
+
+        // Element SDK configuration
+        const defaultConfig = {
+            simulation_title: "Vehicular DTN Network Simulator",
+            road_label: "Highway 101"
+        };
+
+        async function onConfigChange(config) {
+            if (simulator) {
+                simulator.updateConfig(config);
+            }
+        }
+
+        function mapToCapabilities(config) {
+            return {
+                recolorables: [],
+                borderables: [],
+                fontEditable: undefined,
+                fontSizeable: undefined
+            };
+        }
+
+        function mapToEditPanelValues(config) {
+            return new Map([
+                ["simulation_title", config.simulation_title || defaultConfig.simulation_title],
+                ["road_label", config.road_label || defaultConfig.road_label]
+            ]);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            simulator = new DTNSimulator();
+            
+            // Initialize Element SDK
+            if (window.elementSdk) {
+                window.elementSdk.init({
+                    defaultConfig,
+                    onConfigChange,
+                    mapToCapabilities,
+                    mapToEditPanelValues
+                });
+            }
+        });
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99deaa97d65bc1bd',t:'MTc2MzA0MTA3NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
